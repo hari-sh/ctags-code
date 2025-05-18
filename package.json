@@ -1,0 +1,53 @@
+{
+  "name": "tagger",
+  "displayName": "tagger",
+  "description": "",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hari-sh/ctags_code"
+  },
+  "activationEvents": [],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "tagger.get_ctag",
+        "title": "CTags: Jump To Definition"
+      },
+      {
+        "command": "tagger.get_taglist",
+        "title": "CTags: Generate Tag List"
+      },
+      {
+        "command": "tagger.search",
+        "title": "CTags: Find Symbol in Workspace"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "tagger.get_ctag",
+          "when": "editorTextFocus",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "vscode-test"
+  },
+  "dependencies": {
+    "bluebird": "^3.7.2",
+    "ctagz": "^0.1.0",
+    "line-reader": "^0.4.0"
+  }
+}
