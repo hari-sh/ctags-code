@@ -6,7 +6,8 @@ const path = require('path');
 const lineReader = require('line-reader');
 const Promise = require('bluebird');
 const eachLine = Promise.promisify(lineReader.eachLine);
-const taglist = [];
+const msgpack = require('@msgpack/msgpack');
+let taglist = [];
 
 function activate(context) {
 	context.subscriptions.push(regcmd('tagger.get_ctag', get_ctag));
@@ -17,7 +18,11 @@ function activate(context) {
 function deactivate() {}
 
 async function goToDefinition(context) {
-  const selected = await vscode.window.showQuickPick(taglist, {
+    if(taglist.length == 0) {
+    const buffer = fs.readFileSync(path.join(vscode.workspace.rootPath,'tags.bin'));
+    taglist = msgpack.decode(buffer);
+    }
+    const selected = await vscode.window.showQuickPick(taglist, {
     placeHolder: 'Choose a search query or type your own...',
     canPickMany: false,
   });
@@ -25,13 +30,16 @@ async function goToDefinition(context) {
 }
 
 function getTaglist() {
+    const tags_got = []
     eachLine(path.join(vscode.workspace.rootPath, 'tags'), line => {
         if (!line.startsWith('!')) {
                 const [tagName] = line.split('\t');
-                taglist.push(tagName);
+                tags_got.push(tagName);
         } 
     }).then(() => {
-                return taglist;
+        const encoded = msgpack.encode(tags_got);
+        const tagsbin = path.join(vscode.workspace.rootPath,'tags.bin');
+        fs.writeFileSync(tagsbin, encoded);                
         });
 }
 
