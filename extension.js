@@ -18,11 +18,12 @@ async function parseAndStoreTags() {
     const parts = line.split('\t');
     if (parts.length < 3) continue;
 
-    const [tagName, file, pattern] = parts;
+    const [tagName, file, pattern, tagKind] = parts;
     const matches = [...pattern.matchAll(/\/(.*?)\//g)].map(m => m[1]);
     const value = {
       file,
-      pattern: matches[0]
+      pattern: matches[0],
+      tagKind
     };
 
     try {
@@ -130,7 +131,7 @@ async function getValueFromDb(key) {
   }
 }
 
-function go2definition(context, key)    {
+function go2definition(context, key)  {
   const editor = vscode.window.activeTextEditor
   getValueFromDb(key).then(value => {
   if (value) {
@@ -139,7 +140,6 @@ function go2definition(context, key)    {
                     if (!path.isAbsolute(tag.file)) {
                         tag.file = path.join(vscode.workspace.rootPath, tag.file)
                     }
-                    tag.tagKind = ""
                     tag.description = ""
                     tag.label = tag.file
                     tag.detail = tag.pattern
@@ -163,14 +163,12 @@ function go2definition(context, key)    {
 
 
 function getLineNumber(entry, document, sel, canceller) {
-    if (entry.lineNumber === 0) {
-        return getLineNumberPattern(entry, canceller)
-    } else if (entry.tagKind === 'F') {
-        if (document) {
-            return getFileLineNumber(document, sel)
-        }
+    if (entry.tagKind === 'F') {
+        return getFileLineNumber(document, sel)
     }
-
+    else {
+        return getLineNumberPattern(entry, canceller)
+    }
     const lineNumber = Math.max(0, entry.lineNumber - 1)
     return Promise.resolve(new vscode.Selection(lineNumber, 0, lineNumber, 0))
 }
@@ -236,15 +234,14 @@ function getFileLineNumber(document, sel) {
     return Promise.resolve()
 }
 
-function openAndReveal(context, editor, document, sel) {
-    return vscode.workspace.openTextDocument(document).then(doc => {
-        const showOptions = {
-            viewColumn: editor ? editor.viewColumn : vscode.ViewColumn.One,
-            preview: vscode.workspace.getConfiguration('ctagsx').get('openAsPreview'),
-            selection: sel
-        }
-        return vscode.window.showTextDocument(doc, showOptions)
-    })
+async function openAndReveal(context, editor, document, sel) {
+    const doc = await vscode.workspace.openTextDocument(document);
+    const showOptions = {
+        viewColumn: editor ? editor.viewColumn : vscode.ViewColumn.One,
+        preview: vscode.workspace.getConfiguration('ctagsx').get('openAsPreview'),
+        selection: sel
+    };
+    return await vscode.window.showTextDocument(doc, showOptions);
 }
 
 
@@ -259,11 +256,36 @@ function revealCTags(context, editor, entry) {
     })
 }
 
+function getTag(editor) {
+    const tag = editor.document.getText(editor.selection).trim()
+    if (!tag) {
+        const range = editor.document.getWordRangeAtPosition(editor.selection.active)
+        if (range) {
+            return editor.document.getText(range)
+        }
+    }
+    return tag
+}
+
+function jump2tag(context) {
+    const editor = vscode.window.activeTextEditor
+    if (!editor) {
+        console.log('ctagsx: Cannot search - no active editor')
+        return
+    }
+    const tag = getTag(editor)
+    if (!tag) {
+        return
+    }
+    return go2definition(context, tag)
+}
+
 module.exports = {
   activate(context) {
     db = level(path.join(vscode.workspace.rootPath, 'tagsdb'), { valueEncoding: 'json' });
     context.subscriptions.push(vscode.commands.registerCommand('extension.storeTags', parseAndStoreTags));
     context.subscriptions.push(vscode.commands.registerCommand('extension.searchTags', handleSearchTagsCommand));
+    context.subscriptions.push(vscode.commands.registerCommand('extension.jumpTag', jump2tag));
   },
   deactivate() {
     db.close();
