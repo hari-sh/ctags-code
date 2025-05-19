@@ -169,8 +169,6 @@ function getLineNumber(entry, document, sel, canceller) {
     else {
         return getLineNumberPattern(entry, canceller)
     }
-    const lineNumber = Math.max(0, entry.lineNumber - 1)
-    return Promise.resolve(new vscode.Selection(lineNumber, 0, lineNumber, 0))
 }
 
 function getLineNumberPattern(entry, canceller) {
