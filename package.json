@@ -28,6 +28,18 @@
       {
         "command": "tagger.search",
         "title": "CTags: Find Symbol in Workspace"
+      },
+      {
+        "command": "extension.storeTags",
+        "title": "CTags: Store Tags"
+      },
+      {
+        "command": "extension.printTags",
+        "title": "CTags: Print Tags"
+      },
+      {
+        "command": "extension.searchTags",
+        "title": "CTags: Search Tags"
       }
     ],
     "menus": {
@@ -46,9 +58,7 @@
     "test": "vscode-test"
   },
   "dependencies": {
-    "@msgpack/msgpack": "^3.1.1",
-    "bluebird": "^3.7.2",
-    "ctagz": "^0.1.0",
+    "level": "^7.0.0",
     "line-reader": "^0.4.0"
   }
 }
