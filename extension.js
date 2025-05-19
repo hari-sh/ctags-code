@@ -1,6 +1,6 @@
 const fs = require('fs');
 const readline = require('readline');
-const level = require('level');
+const { Level }= require('level');
 const vscode = require('vscode');
 const path = require('path');
 let db = null;
@@ -34,6 +34,7 @@ async function parseAndStoreTags() {
   }
 }
 
+
 async function handleSearchTagsCommand(context) {
   const quickPick = vscode.window.createQuickPick();
   quickPick.placeholder = 'Search tags...';
@@ -56,7 +57,6 @@ async function handleSearchTagsCommand(context) {
   quickPick.onDidAccept(() => {
     const selected = quickPick.selectedItems[0];
     if (selected) {
-    //   vscode.window.showInformationMessage(`Selected tag: ${selected.label}`);
       go2definition(context, selected.label)
     }
     quickPick.hide();
@@ -67,55 +67,26 @@ async function handleSearchTagsCommand(context) {
 }
 
 async function getEntriesWithPrefix(prefix, limit = 10) {
-    const entries = [];
-    let stream;
+  const entries = [];
+  const iterator = db.iterator({
+    gte: prefix,
+    lte: prefix + '\xff',
+    keyEncoding: 'utf8',
+    valueEncoding: 'json'
+  });
 
-    try {
-        stream = db.createReadStream({
-            gte: prefix,
-            lte: prefix + '\xff',
-            limit: limit,
-            keys: true,
-            values: true
-        });
-
-        await new Promise((resolve, reject) => {
-            stream.on('data', (data) => {
-                try {
-                    entries.push({
-                        key: data.key,
-                        value: data.value
-                    });
-                } catch (parseError) {
-                    console.error('Error parsing entry:', parseError);
-                    // Continue with next entry instead of failing
-                }
-            });
-
-            stream.on('error', (err) => {
-                console.error('Stream error:', err);
-                reject(err);
-            });
-
-            stream.on('end', () => {
-                console.log(`Stream ended successfully. Found ${entries.length} entries.`);
-                resolve();
-            });
-
-            stream.on('close', () => {
-                console.log('Stream closed');
-            });
-        });
-
-        return entries;
-    } catch (err) {
-        console.error('Error in getEntriesWithPrefix:', err);
-        throw err; // Re-throw after logging
-    } finally {
-        if (stream) {
-            stream.destroy(); // Clean up stream if it exists
-        }
+  try {
+    for await (const [key, value] of iterator) {
+      entries.push({ key, value });
+      if (entries.length >= limit) break;
     }
+  } catch (err) {
+    console.error('Iterator error:', err);
+    throw err;
+  } finally {
+    await iterator.close();
+  }
+  return entries;
 }
 
 async function getValueFromDb(key) {
@@ -280,7 +251,7 @@ function jump2tag(context) {
 
 module.exports = {
   activate(context) {
-    db = level(path.join(vscode.workspace.rootPath, 'tagsdb'), { valueEncoding: 'json' });
+    db = new Level(path.join(vscode.workspace.rootPath, 'tagsdb'), { valueEncoding: 'json' });
     context.subscriptions.push(vscode.commands.registerCommand('extension.storeTags', parseAndStoreTags));
     context.subscriptions.push(vscode.commands.registerCommand('extension.searchTags', handleSearchTagsCommand));
     context.subscriptions.push(vscode.commands.registerCommand('extension.jumpTag', jump2tag));
