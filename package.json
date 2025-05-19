@@ -58,6 +58,7 @@
     "test": "vscode-test"
   },
   "dependencies": {
+    "bluebird": "^3.7.2",
     "level": "^7.0.0",
     "line-reader": "^0.4.0"
   }
