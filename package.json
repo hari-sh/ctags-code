@@ -1,6 +1,6 @@
 {
-  "name": "tagger",
-  "displayName": "tagger",
+  "name": "ctags-code",
+  "displayName": "ctags-code",
   "description": "",
   "version": "0.0.1",
   "engines": {
@@ -39,11 +39,6 @@
         }
       ]
     }
-  },
-  "scripts": {
-    "lint": "eslint .",
-    "pretest": "npm run lint",
-    "test": "vscode-test"
   },
   "dependencies": {
     "bluebird": "^3.7.2",
