@@ -12,6 +12,9 @@ async function parseAndStoreTags() {
   const fileStream = fs.createReadStream(path.join(vscode.workspace.rootPath, 'tags'));
   const rl = readline.createInterface({ input: fileStream, crlfDelay: Infinity });
 
+  const batchSize = 1000;
+  let batchOps = [];
+
   for await (const line of rl) {
     if (line.startsWith('!')) continue;
 
@@ -26,13 +29,34 @@ async function parseAndStoreTags() {
       tagKind
     };
 
-    try {
-      await db.put(tagName, value);
-    } catch (err) {
-      console.error(`Failed to store tag '${tagName}':`, err);
+    batchOps.push({ type: 'put', key: tagName, value });
+
+    if (batchOps.length >= batchSize) {
+      try {
+        await db.batch(batchOps);
+      } catch (err) {
+        console.error('Batch write failed:', err);
+      }
+      batchOps = [];
     }
   }
+
+  // Write any remaining entries after the loop ends
+  if (batchOps.length > 0) {
+    try {
+      await db.batch(batchOps);
+    } catch (err) {
+      console.error('Final batch write failed:', err);
+    }
+  }
+
+  await db.close();
+  db = new Level(path.join(vscode.workspace.rootPath, 'tagsdb'), { valueEncoding: 'json' });
+  await db.open();
+
+  vscode.window.showInformationMessage('Tags are parsed');
 }
+
 
 
 async function handleSearchTagsCommand(context) {
