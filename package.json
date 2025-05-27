@@ -16,7 +16,7 @@
     "url": "https://github.com/hari-sh/ctags_code"
   },
   "activationEvents": [],
-  "main": "./dist/extension.js",
+  "main": "./src/extension.js",
   "scripts": {
     "compile": "webpack --mode development",
     "build": "webpack --mode production",
