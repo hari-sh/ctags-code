@@ -1,10 +1,12 @@
 {
-  "name": "tagger",
-  "displayName": "tagger",
+  "name": "ctags-code",
+  "displayName": "ctags-code",
+  "icon": "icon.png",
   "description": "",
+  "publisher": "harikalyan",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.100.0"
+    "vscode": "^1.60.0"
   },
   "categories": [
     "Other"
@@ -14,41 +16,43 @@
     "url": "https://github.com/hari-sh/ctags_code"
   },
   "activationEvents": [],
-  "main": "./extension.js",
+  "main": "./dist/extension.js",
+  "scripts": {
+    "compile": "webpack --mode development",
+    "build": "webpack --mode production",
+    "package": "vsce package",
+    "vscode:prepublish": "webpack"
+  },
   "contributes": {
     "commands": [
       {
-        "command": "tagger.get_ctag",
-        "title": "CTags: Jump To Definition"
+        "command": "extension.storeTags",
+        "title": "CTags: Store Tags"
       },
       {
-        "command": "tagger.get_taglist",
-        "title": "CTags: Generate Tag List"
+        "command": "extension.jumpTag",
+        "title": "CTags: Jump To Tag"
       },
       {
-        "command": "tagger.search",
-        "title": "CTags: Find Symbol in Workspace"
+        "command": "extension.searchTags",
+        "title": "CTags: Search Tags"
       }
     ],
     "menus": {
       "editor/context": [
         {
-          "command": "tagger.get_ctag",
+          "command": "extension.jumpTag",
           "when": "editorTextFocus",
           "group": "navigation"
         }
       ]
     }
   },
-  "scripts": {
-    "lint": "eslint .",
-    "pretest": "npm run lint",
-    "test": "vscode-test"
+    "dependencies": {
+    "level": "^10.0.0"
   },
-  "dependencies": {
-    "@msgpack/msgpack": "^3.1.1",
-    "bluebird": "^3.7.2",
-    "ctagz": "^0.1.0",
-    "line-reader": "^0.4.0"
+  "devDependencies": {
+    "webpack": "^5.99.9",
+    "webpack-cli": "^6.0.1"
   }
 }
