@@ -1,6 +1,6 @@
 # ctags-code
 
-A Visual Studio Code extension that integrates **Universal Ctags** to provide fast and accurate code navigation across multiple languages.
+A Visual Studio Code extension that integrates **Ctags** to provide fast and accurate code navigation across multiple languages.
 
 ## Features
 
@@ -12,23 +12,7 @@ A Visual Studio Code extension that integrates **Universal Ctags** to provide fa
 
 ## Requirements
 
-This extension depends on the [Universal Ctags](https://github.com/universal-ctags/ctags) binary.
-
-### Install Universal Ctags
-
-**macOS (Homebrew):**
-```sh
-brew install --HEAD universal-ctags/universal-ctags/universal-ctags
-```
-
-**Ubuntu/Debian:**
-```sh
-sudo apt install universal-ctags
-```
-
-**Windows:**
-- Download the latest binary from [ctags GitHub releases](https://github.com/universal-ctags/ctags-win32/releases)
-- Add the binary to your system's PATH
+This extension supports both [Exuberant Ctags](http://ctags.sourceforge.net/) and [Universal Ctags](https://github.com/universal-ctags/ctags) binaries.
 
 ## Installation (VS Code)
 
@@ -42,17 +26,23 @@ Install the extension directly from the [Visual Studio Code Marketplace](https:/
 
 ### 1. Generate the `tags` File
 
-You must manually generate a `tags` file in the **root of your workspace** using Universal Ctags.
+You must manually generate a `tags` file in the **root of your workspace** using Ctags.
 
-Recommended format (required for this extension to work):
-
+#### Using Universal Ctags
 ```sh
-ctags -o tags -f tags --fields=+n --extras=-F --format=2 -n -u *
+ctags -R -o tags --fields=-n --extras=-F --output-format=tags
 ```
+
+#### Using Exuberant Ctags
+```sh
+ctags -R -o tags
+```
+
+Any tool can be used as long as the below format of the tags file are holding
 
 - **Column 1**: Symbol definition (tag name)
 - **Column 2**: File information
-- **Column 4**: Pattern to locate the symbol
+- **Column 3**: Pattern to locate the symbol
 
 > 📂 Place the `tags` file directly in the root of your workspace.
 
@@ -94,7 +84,6 @@ As you type, a **Quick Pick** dropdown will show matching symbols from the `tags
 | `Ctags: Store Tags` | Parses `tags` file and creates `tagsdb` (LevelDB) |
 | `Ctags: Jump to Tag` | Jump to the selected tag definition |
 | `Ctags: Search Tag` | Search symbols interactively via Quick Pick |
-
 
 ## Implementation Details
 

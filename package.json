@@ -9,7 +9,8 @@
     "vscode": "^1.60.0"
   },
   "categories": [
-    "Other"
+    "Programming Languages",
+    "Language Packs"
   ],
   "repository": {
     "type": "git",
