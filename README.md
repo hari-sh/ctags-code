@@ -19,7 +19,7 @@ This extension supports both [Exuberant Ctags](http://ctags.sourceforge.net/) an
 Install the extension directly from the [Visual Studio Code Marketplace](https://marketplace.visualstudio.com/):
 1. Open VS Code
 2. Go to the Extensions panel (`Ctrl+Shift+X` or `Cmd+Shift+X`)
-3. Search for **ctags_code**
+3. Search for **ctags-code**
 4. Click **Install**
 
 ## Usage
