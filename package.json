@@ -4,7 +4,7 @@
   "icon": "icon.png",
   "description": "",
   "publisher": "harikalyan",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.60.0"
   },
@@ -13,7 +13,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/hari-sh/ctags_code"
+    "url": "https://github.com/hari-sh/ctags-code"
   },
   "activationEvents": [],
   "main": "./dist/extension.js",

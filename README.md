@@ -1,4 +1,4 @@
-# ctags_code
+# ctags-code
 
 A Visual Studio Code extension that integrates **Universal Ctags** to provide fast and accurate code navigation across multiple languages.
 
