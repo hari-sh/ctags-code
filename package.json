@@ -3,10 +3,10 @@
   "displayName": "ctags-code",
   "icon": "icon.png",
   "description": "",
-  "publisher": "Hari Kalyan",
-  "version": "0.0.2",
+  "publisher": "harikalyan",
+  "version": "0.0.1",
   "engines": {
-    "vscode": "^1.100.0"
+    "vscode": "^1.60.0"
   },
   "categories": [
     "Other"
@@ -16,7 +16,7 @@
     "url": "https://github.com/hari-sh/ctags_code"
   },
   "activationEvents": [],
-  "main": "./src/extension.js",
+  "main": "./dist/extension.js",
   "scripts": {
     "compile": "webpack --mode development",
     "build": "webpack --mode production",
@@ -49,9 +49,7 @@
     }
   },
     "dependencies": {
-    "bluebird": "^3.7.2",
-    "level": "^10.0.0",
-    "line-reader": "^0.4.0"
+    "level": "^10.0.0"
   },
   "devDependencies": {
     "webpack": "^5.99.9",

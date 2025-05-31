@@ -28,7 +28,7 @@ async function handleSearchTagsCommand(context) {
   quickPick.onDidAccept(() => {
     const selected = quickPick.selectedItems[0];
     if (selected) {
-      go2definition(context, selected.label)
+      jumputil(vscode.window.activeTextEditor, context, selected.label)
     }
     quickPick.hide();
   });
@@ -37,11 +37,7 @@ async function handleSearchTagsCommand(context) {
   quickPick.show();
 }
 
-function go2definition(context, key)  {
-  jumputil(vscode.window.activeTextEditor, context, key);
-}
-
-function jump2tag(context) {
+async function jump2tag(context) {
     const editor = vscode.window.activeTextEditor
     const tag = getTag(editor)
     return jumputil(editor, context, tag)

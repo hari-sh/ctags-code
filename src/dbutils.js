@@ -59,5 +59,12 @@ async function getEntriesWithPrefix(prefix, limit = 10) {
   return entries;
 }
 
+async function batchWriteIntoDB(data)  {
+  try {
+    await db.batch(data);
+    } catch (err) {
+        console.error('Batch write failed:', err);
+    }
+}
 
-module.exports = { initDB, getDB, closeDB, getValueFromDb, getEntriesWithPrefix };
+module.exports = { initDB, getDB, closeDB, getValueFromDb, getEntriesWithPrefix, batchWriteIntoDB };
