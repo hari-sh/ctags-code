@@ -2,12 +2,11 @@ const vscode = require('vscode');
 const path = require('path');
 const fs = require('fs');
 const {jumputil, getTag, storeTagsToDB} = require('./tagutils');
-const {initDB, closeDB, getEntriesWithPrefix, assignIdsToVariables, searchQuery, exportVariablesToJson} = require('./dbutils');
+const {initDB, closeDB, assignIdsToVariables, searchQuery} = require('./dbutils');
 
 async function parseAndStoreTags() {
     await storeTagsToDB(path.join(vscode.workspace.rootPath, 'tags'));
     await assignIdsToVariables();
-    await exportVariablesToJson(path.join(vscode.workspace.rootPath, 'variables.json'));
 }
 
 async function handleSearchTagsCommand(context) {

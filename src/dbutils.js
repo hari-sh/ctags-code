@@ -36,29 +36,6 @@ async function getValueFromDb(key) {
   }
 }
 
-async function getEntriesWithPrefix(prefix, limit = 10) {
-  const entries = [];
-  const iterator = db.iterator({
-    gte: prefix,
-    lte: prefix + '\xff',
-    keyEncoding: 'utf8',
-    valueEncoding: 'json'
-  });
-
-  try {
-    for await (const [key, value] of iterator) {
-      entries.push({ key, value });
-      if (entries.length >= limit) break;
-    }
-  } catch (err) {
-    console.error('Iterator error:', err);
-    throw err;
-  } finally {
-    await iterator.close();
-  }
-  return entries;
-}
-
 async function batchWriteIntoDB(data) {
   try {
     await db.batch(data);
@@ -140,7 +117,6 @@ const assignIdsToVariables = async () => {
     const variableName = key.slice(4);
     const newId = idCounter++;
 
-    // batch.put(key, { id: newId, value: value.value });
     batch.put(`id:${newId}`, variableName);
 
     for (const token of tokenize(variableName)) {
@@ -159,28 +135,4 @@ const assignIdsToVariables = async () => {
   console.log(`✅ Assigned IDs to ${idCounter - 1} variables and built token index.`);
 };
 
-const saveJson = (filename, data) => {
-  const json = JSON.stringify(data, null, 2);
-
-  fs.writeFile(filename, json, 'utf8', (err) => {
-    if (err) {
-      console.error('❌ Failed to write JSON:', err);
-    } else {
-      console.log(`✅ Saved to ${filename}`);
-    }
-  });
-};
-
-const exportVariablesToJson = async (outputPath) => {
-  const results = [];
-
-  for await (const [key, value] of db.iterator()) {
-    results.push({ key, value });
-  }
-
-  saveJson(outputPath, JSON.stringify(results, null, 2));
-
-  console.log(`✅ Exported ${results.length} variables to ${outputPath}`);
-};
-
-module.exports = { initDB, getDB, closeDB, getValueFromDb, getEntriesWithPrefix, batchWriteIntoDB, searchQuery, assignIdsToVariables, exportVariablesToJson };
+module.exports = { initDB, getDB, closeDB, getValueFromDb, batchWriteIntoDB, searchQuery, assignIdsToVariables };
