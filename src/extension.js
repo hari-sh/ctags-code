@@ -1,16 +1,21 @@
 const vscode = require('vscode');
 const path = require('path');
+const fs = require('fs');
 const {jumputil, getTag, storeTagsToDB} = require('./tagutils');
-const {initDB, closeDB, getEntriesWithPrefix} = require('./dbutils');
+const {initDB, closeDB, assignIdsToVariables, searchQuery} = require('./dbutils');
 
 async function parseAndStoreTags() {
-    storeTagsToDB(path.join(vscode.workspace.rootPath, 'tags'));
+    await storeTagsToDB(path.join(vscode.workspace.rootPath, 'tags'));
+    await assignIdsToVariables();
 }
 
 async function handleSearchTagsCommand(context) {
   const quickPick = vscode.window.createQuickPick();
   quickPick.placeholder = 'Search tags...';
   quickPick.matchOnDescription = true;
+  quickPick.filterItems = false;
+  quickPick.matchOnDescription = false;
+  quickPick.matchOnDetail = false;
 
   quickPick.onDidChangeValue(async (input) => {
     if (!input) {
@@ -18,11 +23,12 @@ async function handleSearchTagsCommand(context) {
       return;
     }
 
-    const results = await getEntriesWithPrefix(input);
-    quickPick.items = results.map(item => ({
-      label: item.key,
-      description: item.value.file,
-    }));
+    const items = await searchQuery(input);
+    quickPick.items = items.map(r => ({
+    label: r.label,
+    description: r.description,
+    alwaysShow: true
+  }));
   });
 
   quickPick.onDidAccept(() => {

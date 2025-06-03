@@ -10,34 +10,34 @@ async function getPattern(filePath, name, canceller, pattern, matchWhole) {
     input: fileStream,
     crlfDelay: Infinity
     });
-    let lineNumber = 0
+    let lno = 0
     let charPos = 0
     let found = false
     for await (const line of rl) {
-        lineNumber += 1
+        lno += 1
         if ((matchWhole && line === pattern) || line.startsWith(pattern)) {
             found = true
             charPos = Math.max(line.indexOf(name), 0)
-            console.log(`ctags-code: Found '${pattern}' at ${lineNumber}:${charPos}`)
-            return {retval:false, found, lineNumber, charPos}
+            console.log(`ctags-code: Found '${pattern}' at ${lno}:${charPos}`)
+            return {retval:false, found, lno, charPos}
         } else if (canceller && canceller.isCancellationRequested) {
             console.log('ctags-code: Cancelled pattern searching')
-            return {retval:false, found, lineNumber, charPos}
+            return {retval:false, found, lno, charPos}
         }
     }
 }
 
 
-async function getLineNumber(entry, document, sel, canceller) {
+async function getlno(entry, document, sel, canceller) {
     if (entry.tagKind === 'F') {
-        return await getFileLineNumber(document, sel)
+        return await getFilelno(document, sel)
     }
     else {
-        return await getLineNumberPattern(entry, canceller)
+        return await getlnoPattern(entry, canceller)
     }
 }
 
-async function getLineNumberPattern(entry, canceller) {
+async function getlnoPattern(entry, canceller) {
     let matchWhole = false
     let pattern = entry.pattern
     if (pattern.startsWith("^")) {
@@ -52,20 +52,20 @@ async function getLineNumberPattern(entry, canceller) {
         matchWhole = true
     }
     console.log(pattern);
-    const linedata = await getPattern(entry.file, entry.name, canceller, pattern, matchWhole);
-    console.log(linedata);
-    if (linedata.found) {
-        return new vscode.Selection(linedata.lineNumber - 1, linedata.charPos, linedata.lineNumber - 1, linedata.charPos)
+    const ldata = await getPattern(entry.file, entry.name, canceller, pattern, matchWhole);
+    console.log(ldata);
+    if (ldata.found) {
+        return new vscode.Selection(ldata.lno - 1, ldata.charPos, ldata.lno - 1, ldata.charPos)
     }
 }
 
-async function getFileLineNumber(document, sel) {
+async function getFilelno(document, sel) {
     let pos = sel.end.translate(0, 1)
     let range = document.getWordRangeAtPosition(pos)
     if (range) {
         let text = document.getText(range)
         if (text.match(/[0-9]+/)) {
-            const lineNumber = Math.max(0, parseInt(text, 10) - 1)
+            const lno = Math.max(0, parseInt(text, 10) - 1)
             let charPos = 0
 
             pos = range.end.translate(0, 1)
@@ -76,8 +76,8 @@ async function getFileLineNumber(document, sel) {
                     charPos = Math.max(0, parseInt(text) - 1)
                 }
             }
-            console.log(`ctags-code: Resolved file position to line ${lineNumber + 1}, char ${charPos + 1}`)
-            return new vscode.Selection(lineNumber, charPos, lineNumber, charPos)
+            console.log(`ctags-code: Resolved file position to line ${lno + 1}, char ${charPos + 1}`)
+            return new vscode.Selection(lno, charPos, lno, charPos)
         }
     }
 }
@@ -97,7 +97,7 @@ async function revealCTags(context, editor, entry) {
     }
     const document = editor ? editor.document : null
     const triggeredSel = editor ? editor.selection : null;
-    const sel = await getLineNumber(entry, document, triggeredSel);
+    const sel = await getlno(entry, document, triggeredSel);
     return openAndReveal(context, editor, entry.file, sel);
 }
 
@@ -113,21 +113,21 @@ function getTag(editor) {
 }
 
 async function jumputil(editor, context, key) {
-    if (!editor) return;
+    // if (!editor) return;
     if (!key) return;
-    getValueFromDb(key).then(value => {
-  if (value) {
-    console.log('Found:', value);
-    const options = [value].map(tag => {
-                    if (!path.isAbsolute(tag.file)) {
-                        tag.file = path.join(vscode.workspace.rootPath, tag.file)
-                    }
-                    tag.description = ""
-                    tag.label = tag.file
-                    tag.detail = tag.pattern
-                    tag.lineNumber = 0
-                    return tag
-                });
+    const value = await getValueFromDb(`tag:${key}`);
+    if (value) {
+        console.log('Found:', value);
+        const options = [value].map(tag => {
+            if (!path.isAbsolute(tag.file)) {
+                tag.file = path.join(vscode.workspace.rootPath, tag.file)
+            }
+            tag.description = ""
+            tag.label = tag.file
+            tag.detail = tag.pattern
+            tag.lno = 0
+            return tag
+        });
         if (!options.length) {
             return vscode.window.showInformationMessage(`ctags-code: No tags found for ${tag}`)
         } else if (options.length === 1) {
@@ -137,10 +137,19 @@ async function jumputil(editor, context, key) {
                 return revealCTags(context, editor, opt)
             })
         }
-  } else {
-    console.log('Key not found');
-  }
-});
+    } else {
+        console.log('Key not found');
+    }
+}
+
+function tokenizeTags(str) {
+  return str
+    .replace(/([a-z])([A-Z])/g, '$1 $2')     // split camelCase & PascalCase
+    .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')// split ALLCAPS to TitleCase
+    .replace(/[_\-]+/g, ' ')                 // replace snake_case & kebab-case with space
+    .toLowerCase()
+    .split(/\s+/)                            // split on whitespace
+    .filter(Boolean);
 }
 
 async function storeTagsToDB(tagsfile)    {
@@ -162,10 +171,11 @@ async function storeTagsToDB(tagsfile)    {
 
         batchOps.push({
             type: 'put', 
-            key: tagName, 
+            key: `tag:${tagName}`,
             value: {
                 file,
                 pattern: matches[0],
+                tokens: tokenizeTags(tagName),
                 tagKind
             }
         });
