@@ -3,14 +3,17 @@ name: Package and Release VSIX
 on:
   push:
     branches:
-      - '**'
+      - '**'  # Trigger on all branches
+
+permissions:
+  contents: write  # Needed to push tags and create releases
 
 jobs:
   release-vsix:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Node.js
@@ -21,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Set version based on branch
+      - name: Set dynamic version from branch
         id: version
         run: |
           BRANCH="${GITHUB_REF##*/}"
@@ -43,17 +46,17 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
-          git tag "v${{ steps.version.outputs.version }}"
-          git push origin "v${{ steps.version.outputs.version }}"
+          git tag "v${{ env.VERSION }}"
+          git push origin "v${{ env.VERSION }}"
 
       - name: Package VSIX
         run: npx vsce package
 
-      - name: Upload VSIX to Release
+      - name: Upload VSIX to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "v${{ steps.version.outputs.version }}"
-          name: "Release ${{ steps.version.outputs.version }}"
+          tag_name: "v${{ env.VERSION }}"
+          name: "Release ${{ env.VERSION }}"
           files: "*.vsix"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
