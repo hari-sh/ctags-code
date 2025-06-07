@@ -1,12 +1,12 @@
-name: Beta Release on Push to Main
+name: Branch-Based VSIX Release
 
 on:
   push:
     branches:
-      - clevel
+      - "**"
 
 jobs:
-  package-beta-vsix:
+  release-vsix:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,27 +21,35 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Get short commit SHA
-        id: vars
-        run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
-      - name: Update version to beta.<run_number>
+      - name: Set version with branch suffix
+        id: version
         run: |
+          BRANCH="${GITHUB_REF##*/}"
+          SAFE_BRANCH=$(echo "$BRANCH" | tr '/' '-' | tr '[:upper:]' '[:lower:]')
+          BASE=$(node -p "require('./package.json').version.split('-')[0]")
+          VERSION="${BASE}-${SAFE_BRANCH}.${GITHUB_RUN_NUMBER}"
+
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
           node -e "
             const fs = require('fs');
             const pkg = require('./package.json');
-            const baseVersion = pkg.version.split('-')[0];
-            const betaVersion = \`\${baseVersion}-beta.${{ github.run_number }}\`;
-            pkg.version = betaVersion;
+            pkg.version = '$VERSION';
             fs.writeFileSync('./package.json', JSON.stringify(pkg, null, 2));
-            console.log('Updated version:', betaVersion);
           "
+          echo "Updated version to: $VERSION"
 
       - name: Package VSIX
         run: npx vsce package
 
+      - name: Rename VSIX file
+        run: |
+          EXT_NAME=$(node -p "require('./package.json').name")
+          mv *.vsix "$EXT_NAME-${{ steps.version.outputs.version }}.vsix"
+
       - name: Upload VSIX artifact
         uses: actions/upload-artifact@v4
         with:
-          name: vsix-beta-${{ github.run_number }}
+          name: vsix-${{ github.ref_name }}
           path: "*.vsix"
