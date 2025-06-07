@@ -43,11 +43,6 @@ jobs:
       - name: Package VSIX
         run: npx vsce package
 
-      - name: Rename VSIX file
-        run: |
-          EXT_NAME=$(node -p "require('./package.json').name")
-          mv *.vsix "$EXT_NAME-${{ steps.version.outputs.version }}.vsix"
-
       - name: Upload VSIX artifact
         uses: actions/upload-artifact@v4
         with:
