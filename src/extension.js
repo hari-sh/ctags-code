@@ -2,7 +2,7 @@ const vscode = require('vscode');
 const path = require('path');
 const fs = require('fs');
 const {jumputil, getTag, storeTagsToDB} = require('./tagutils');
-const {initDB, closeDB, assignIdsToVariables, searchQuery} = require('./dbutils');
+const {initDB, closeDB, assignIdsToVariables, searchQuery, resetSearchMap} = require('./dbutils');
 
 async function parseAndStoreTags() {
     await storeTagsToDB(path.join(vscode.workspace.rootPath, 'tags'));
@@ -22,7 +22,6 @@ async function handleSearchTagsCommand(context) {
       quickPick.items = [];
       return;
     }
-
     const items = await searchQuery(input);
     quickPick.items = items.map(r => ({
     label: r.label,
@@ -37,6 +36,7 @@ async function handleSearchTagsCommand(context) {
       jumputil(vscode.window.activeTextEditor, context, selected.label)
     }
     quickPick.hide();
+    resetSearchMap();
   });
 
   quickPick.onDidHide(() => quickPick.dispose());

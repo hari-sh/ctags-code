@@ -4,7 +4,12 @@ const vscode = require('vscode');
 const fs = require('fs');
 
 let db;
-const dbpath = path.join(vscode.workspace.rootPath, 'tagsdb')
+const dbpath = path.join(vscode.workspace.rootPath, 'tagsdb');
+let inputUnionMap = new Map();
+
+function resetSearchMap()  {
+  inputUnionMap = new Map();
+}
 
 function initDB() {
   if (!db) {
@@ -55,43 +60,55 @@ const tokenize = (name) => {
     .filter(Boolean);
 };
 
+function getUnion(group) {
+  const union = new Set();
+  for (const arr of group) {
+    for (const val of arr) {
+      union.add(val);
+    }
+  }
+  return union;
+}
+
+function intersectionOfUnions(unionSets, limit = 10) {
+  const [firstSet, ...restSets] = unionSets;
+  const result = [];
+  for (const val of firstSet) {
+    if (restSets.every(set => set.has(val))) {
+      result.push(val);
+      if (result.length === limit) break;
+    }
+  }
+  return result;
+}
+
+async function getIds(words) {
+  const unionSets = [];
+  for (const word of words) {
+    let unionSet;
+    if (inputUnionMap.has(word)) {
+      unionSet = inputUnionMap.get(word);
+      console.log(inputUnionMap);
+    } else {
+      const ilist = [];
+      for await (const [key, value] of db.iterator({ gte: `token:${word}`, lt: `token:${word}~` })) {
+        ilist.push(value);
+      }
+      unionSet = getUnion(ilist);
+      inputUnionMap.set(word, unionSet);
+    }
+    unionSets.push(unionSet);
+  }
+  return intersectionOfUnions(unionSets);
+}
+
+
 const searchQuery = async (query) => {
   const terms = tokenize(query);
   if (terms.length === 0) return [];
-  if(terms.length === 2)  {
-    console.log();
-  }
-  const idSets = [];
-
-  for (const term of terms) {
-    const ids = new Set();
-
-    for await (const [key, value] of db.iterator({ gte: `token:${term}`, lt: `token:${term}~` })) {
-      if (Array.isArray(value)) {
-        for (const id of value) {
-          if (typeof id === 'number' && Number.isInteger(id)) {
-            ids.add(id);
-          }
-        }
-      }
-      if (ids.size >= 1000) break;
-    }
-
-    if (!ids.size) return []; // no match for one term → no result
-    idSets.push(ids);
-  }
-
-  // Perform set intersection manually
-  let intersection = idSets[0];
-  for (let i = 1; i < idSets.length; i++) {
-    intersection = new Set([...intersection].filter(id => idSets[i].has(id)));
-    if (!intersection.size) return []; // short-circuit if nothing left
-  }
-
-  // Fetch matching variables
   const results = [];
-  for (const id of intersection) {
-    if (results.length >= 10) break;
+  const ids = await getIds(terms);
+  for (const id of ids) {
     try {
       const variableName = await db.get(`id:${id}`);
       const meta = await db.get(`tag:${variableName}`);
@@ -100,10 +117,9 @@ const searchQuery = async (query) => {
         description: meta?.file || ''
       });
     } catch {
-      // skip invalid entries
+      console.log('Unable to get db value');
     }
   }
-
   return results;
 };
 
@@ -135,4 +151,4 @@ const assignIdsToVariables = async () => {
   console.log(`✅ Assigned IDs to ${idCounter - 1} variables and built token index.`);
 };
 
-module.exports = { initDB, getDB, closeDB, getValueFromDb, batchWriteIntoDB, searchQuery, assignIdsToVariables };
+module.exports = { initDB, getDB, closeDB, getValueFromDb, batchWriteIntoDB, searchQuery, assignIdsToVariables, resetSearchMap };
