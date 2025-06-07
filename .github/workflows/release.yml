@@ -3,7 +3,7 @@ name: Beta Release on Push to Main
 on:
   push:
     branches:
-      - main
+      - clevel
 
 jobs:
   package-beta-vsix:
