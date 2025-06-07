@@ -1,6 +1,23 @@
 const path = require('path');
-const { Level } = require('level');
 const vscode = require('vscode');
+const nodeGypBuild = require('node-gyp-build');
+
+function customNodeGypBuild() {
+  const prebuildsPath = path.join(__dirname, 'prebuilds');
+  return nodeGypBuild(prebuildsPath);
+}
+
+const Module = require('module');
+const originalRequire = Module.prototype.require;
+
+Module.prototype.require = function (id) {
+  if (id === 'node-gyp-build') {
+    return customNodeGypBuild;
+  }
+  return originalRequire.apply(this, arguments);
+};
+
+const { ClassicLevel } = require('classic-level');
 const fs = require('fs');
 
 let db;
@@ -13,7 +30,7 @@ function resetSearchMap()  {
 
 function initDB() {
   if (!db) {
-    db = new Level(dbpath, { valueEncoding: 'json' });
+    db = new ClassicLevel(dbpath, { valueEncoding: 'json' });
   }
   return db;
 }

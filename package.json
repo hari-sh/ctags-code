@@ -17,13 +17,7 @@
     "url": "https://github.com/hari-sh/ctags-code"
   },
   "activationEvents": [],
-  "main": "./src/extension.js",
-  "scripts": {
-    "compile": "webpack --mode development",
-    "build": "webpack --mode production",
-    "package": "vsce package",
-    "vscode:prepublish": "webpack"
-  },
+  "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
@@ -49,11 +43,16 @@
       ]
     }
   },
-    "dependencies": {
-    "level": "^10.0.0"
+  "scripts": {
+    "bundle": "node build.js",
+    "vscode:prepublish": "node build.js",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "classic-level": "^3.0.0",
+    "node-gyp-build": "^4.8.4"
   },
   "devDependencies": {
-    "webpack": "^5.99.9",
-    "webpack-cli": "^6.0.1"
+    "esbuild": "^0.25.5"
   }
 }
