@@ -89,7 +89,7 @@ function getUnion(group) {
 
 function getSortedList(stringSet) {
   return [...stringSet]
-    .sort((a, b) => a.length - b.length || a.localeCompare(b));
+    .sort((a, b) => a.length - b.length);
 }
 
 function intersectionOfUnions(unionSets, limit = 10) {
