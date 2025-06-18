@@ -60,6 +60,9 @@ async function getlnoPattern(entry, canceller) {
 }
 
 async function getFilelno(document, sel) {
+    if(!sel) {
+        return new vscode.Selection(0, 0, 0, 0);
+    }
     let pos = sel.end.translate(0, 1)
     let range = document.getWordRangeAtPosition(pos)
     if (range) {
@@ -192,8 +195,6 @@ async function storeTagsToDB(tagsfile)    {
 
     await db.close();
     await db.open();
-
-    vscode.window.showInformationMessage('Tags are parsed');
 }
 
 module.exports = {jumputil ,getTag, storeTagsToDB};

@@ -19,10 +19,10 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Set dynamic version from branch
         id: version
@@ -30,7 +30,7 @@ jobs:
           BRANCH="${GITHUB_REF##*/}"
           SAFE_BRANCH=$(echo "$BRANCH" | tr '/' '-' | tr '[:upper:]' '[:lower:]')
           BASE=$(node -p "require('./package.json').version.split('-')[0]")
-          VERSION="${BASE}-${SAFE_BRANCH}.${GITHUB_RUN_NUMBER}"
+          VERSION="${BASE}-dev.${GITHUB_RUN_NUMBER}"
 
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "version=$VERSION" >> $GITHUB_OUTPUT
@@ -50,7 +50,7 @@ jobs:
           git push origin "v${{ env.VERSION }}"
 
       - name: Package VSIX
-        run: npx vsce package
+        run: npx @vscode/vsce package
 
       - name: Upload VSIX to GitHub Release
         uses: softprops/action-gh-release@v2

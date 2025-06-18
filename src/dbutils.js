@@ -92,16 +92,15 @@ function getSortedList(stringSet) {
     .sort((a, b) => a.length - b.length);
 }
 
-function intersectionOfUnions(unionSets, limit = 10) {
+function intersectionOfUnions(unionSets) {
   const [firstSet, ...restSets] = unionSets;
   const result = [];
   for (const val of getSortedList(firstSet)) {
     if (restSets.every(set => set.has(val))) {
       result.push(val);
-      if (result.length === limit) break;
     }
   }
-  return result;
+  return result.sort((a,b) => a - b);
 }
 
 async function getIds(words) {
@@ -114,7 +113,7 @@ async function getIds(words) {
     } else {
       const ilist = [];
       for await (const [key, value] of db.iterator({ gte: `token:${word}`, lt: `token:${word}~` })) {
-        ilist.push(value);
+        ilist.push(value.slice(6));
       }
       unionSet = getUnion(ilist);
       inputUnionMap.set(word, unionSet);
@@ -130,7 +129,7 @@ const searchQuery = async (query) => {
   if (terms.length === 0) return [];
   const results = [];
   const ids = await getIds(terms);
-  for (const id of ids) {
+  for (const id of ids.slice(0, 15)) {
     try {
       const variableName = await db.get(`id:${id}`);
       const meta = await db.get(`tag:${variableName}`);
@@ -147,30 +146,30 @@ const searchQuery = async (query) => {
 
 
 const assignIdsToVariables = async () => {
-  let idCounter = 1;
-  const tokenMap = new Map();
-  const batch = db.batch();
-
+  const alltags = [];
   for await (const [key, value] of db.iterator({ gte: 'tag:', lt: 'tag;' })) {
-    const variableName = key.slice(4);
-    const newId = idCounter++;
+    alltags.push(key.slice(4));
+  }
+  alltags.sort((a,b) => a.length - b.length);
 
-    batch.put(`id:${newId}`, variableName);
-
-    for (const token of tokenize(variableName)) {
+  const idbatch = db.batch();
+  const tokenMap = new Map();
+  for(let ind = 0; ind < alltags.length; ind++) {
+    const varname = alltags[ind];
+    const varid = ind + 1;
+    idbatch.put(`id:${varid}`, varname);
+    for (const token of tokenize(varname)) {
       if (!tokenMap.has(token)) tokenMap.set(token, new Set());
-      tokenMap.get(token).add(newId);
+      tokenMap.get(token).add(varid);
     }
   }
+  await idbatch.write();
 
+  const tokenbatch = db.batch();
   for (const [token, ids] of tokenMap) {
-    batch.put(`token:${token}`, Array.from(ids));
+    tokenbatch.put(`token:${token}`, Array.from(ids));
   }
-
-  batch.put('id:counter', idCounter - 1);
-
-  await batch.write();
-  console.log(`✅ Assigned IDs to ${idCounter - 1} variables and built token index.`);
+  await tokenbatch.write();
 };
 
 module.exports = { initDB, getDB, closeDB, getValueFromDb, batchWriteIntoDB, searchQuery, assignIdsToVariables, resetSearchMap };

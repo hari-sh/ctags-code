@@ -7,6 +7,7 @@ const {initDB, closeDB, assignIdsToVariables, searchQuery, resetSearchMap} = req
 async function parseAndStoreTags() {
     await storeTagsToDB(path.join(vscode.workspace.rootPath, 'tags'));
     await assignIdsToVariables();
+    vscode.window.showInformationMessage('Tags are parsed');
 }
 
 async function handleSearchTagsCommand(context) {
