@@ -50,7 +50,7 @@ jobs:
           git push origin "v${{ env.VERSION }}"
 
       - name: Package VSIX
-        run: npx vsce package
+        run: npx @vscode/vsce package
 
       - name: Upload VSIX to GitHub Release
         uses: softprops/action-gh-release@v2
