@@ -30,7 +30,7 @@ jobs:
           BRANCH="${GITHUB_REF##*/}"
           SAFE_BRANCH=$(echo "$BRANCH" | tr '/' '-' | tr '[:upper:]' '[:lower:]')
           BASE=$(node -p "require('./package.json').version.split('-')[0]")
-          VERSION="${BASE}-${SAFE_BRANCH}.${GITHUB_RUN_NUMBER}"
+          VERSION="${BASE}-dev.${GITHUB_RUN_NUMBER}"
 
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "version=$VERSION" >> $GITHUB_OUTPUT
