@@ -4,10 +4,12 @@ const fs = require('fs');
 const {jumputil, getTag, storeTagsToDB} = require('./tagutils');
 const {initDB, closeDB, assignIdsToVariables, searchQuery, resetSearchMap} = require('./dbutils');
 const logger = require('./logger');
+const debug = require('./debug');
 
 async function parseAndStoreTags() {
     await storeTagsToDB(path.join(vscode.workspace.rootPath, 'tags'));
     await assignIdsToVariables();
+    await debug.printdb();
     vscode.window.showInformationMessage('Tags are parsed');
 }
 
@@ -51,6 +53,16 @@ async function jump2tag(context) {
     return jumputil(editor, context, tag)
 }
 
+async function debugSearch(context) {
+    const input = "read inp";
+    for (let i = 1; i <= input.length; i++) {
+      const inp = input.slice(0, i);
+      const out = await searchQuery(inp);
+      logger.log(inp);
+      logger.log(JSON.stringify(out));
+    }
+}
+
 module.exports = {
   activate(context) {
     logger.initLogger();
@@ -58,6 +70,7 @@ module.exports = {
     context.subscriptions.push(vscode.commands.registerCommand('extension.storeTags', parseAndStoreTags));
     context.subscriptions.push(vscode.commands.registerCommand('extension.searchTags', handleSearchTagsCommand));
     context.subscriptions.push(vscode.commands.registerCommand('extension.jumpTag', jump2tag));
+    context.subscriptions.push(vscode.commands.registerCommand('extension.debug', debugSearch));
   },
   deactivate() {
     closeDB();

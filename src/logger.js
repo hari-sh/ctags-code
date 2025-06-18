@@ -29,7 +29,7 @@ function log(message) {
   if (!logStream) return;
 
 //   const timestamp = new Date().toISOString();
-  logStream.write(message);
+  logStream.write(message + '\n');
 }
 
 function disposeLogger() {

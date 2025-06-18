@@ -19,6 +19,7 @@ Module.prototype.require = function (id) {
 
 const { ClassicLevel } = require('classic-level');
 const fs = require('fs');
+const logger = require('./logger');
 
 let db;
 const dbpath = path.join(vscode.workspace.rootPath, 'tagsdb');
@@ -95,12 +96,15 @@ function getSortedList(stringSet) {
 function intersectionOfUnions(unionSets) {
   const [firstSet, ...restSets] = unionSets;
   const result = [];
-  for (const val of getSortedList(firstSet)) {
+  for (const val of Array.from(firstSet).sort((a, b) => a - b)) {
     if (restSets.every(set => set.has(val))) {
       result.push(val);
+      if (result.length == 15) {
+          return result;
+      }
     }
   }
-  return result.sort((a,b) => a - b);
+  return result;
 }
 
 async function getIds(words) {
@@ -109,11 +113,10 @@ async function getIds(words) {
     let unionSet;
     if (inputUnionMap.has(word)) {
       unionSet = inputUnionMap.get(word);
-      console.log(inputUnionMap);
     } else {
       const ilist = [];
       for await (const [key, value] of db.iterator({ gte: `token:${word}`, lt: `token:${word}~` })) {
-        ilist.push(value.slice(6));
+        ilist.push(value);
       }
       unionSet = getUnion(ilist);
       inputUnionMap.set(word, unionSet);
