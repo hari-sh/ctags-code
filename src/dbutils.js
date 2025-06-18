@@ -92,13 +92,12 @@ function getSortedList(stringSet) {
     .sort((a, b) => a.length - b.length);
 }
 
-function intersectionOfUnions(unionSets, limit = 10) {
+function intersectionOfUnions(unionSets) {
   const [firstSet, ...restSets] = unionSets;
   const result = [];
   for (const val of getSortedList(firstSet)) {
     if (restSets.every(set => set.has(val))) {
       result.push(val);
-      if (result.length === limit) break;
     }
   }
   return result.sort((a,b) => a - b);
