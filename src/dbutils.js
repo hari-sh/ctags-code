@@ -19,7 +19,6 @@ Module.prototype.require = function (id) {
 
 const { ClassicLevel } = require('classic-level');
 const fs = require('fs');
-const logger = require('./logger');
 
 let db;
 const dbpath = path.join(vscode.workspace.rootPath, 'tagsdb');
