@@ -31,10 +31,6 @@
       {
         "command": "extension.searchTags",
         "title": "CTags: Search Tags"
-      },
-      {
-        "command": "extension.debug",
-        "title": "CTags: Debug Search"
       }
     ],
     "menus": {
