@@ -19,8 +19,6 @@ Module.prototype.require = function (id) {
 
 const { ClassicLevel } = require('classic-level');
 const fs = require('fs');
-const logger = require('./logger');
-const {getSuggestionIDs} = require('./setOperation');
 
 let db;
 const dbpath = path.join(vscode.workspace.rootPath, 'tagsdb');
@@ -79,25 +77,50 @@ const tokenize = (name) => {
     .filter(Boolean);
 };
 
+function getUnion(group) {
+  const union = new Set();
+  for (const arr of group) {
+    for (const val of arr) {
+      union.add(val);
+    }
+  }
+  return union;
+}
+
+function getSortedList(stringSet) {
+  return [...stringSet]
+    .sort((a, b) => a.length - b.length);
+}
+
+function intersectionOfUnions(unionSets) {
+  const [firstSet, ...restSets] = unionSets;
+  const result = [];
+  for (const val of getSortedList(firstSet)) {
+    if (restSets.every(set => set.has(val))) {
+      result.push(val);
+    }
+  }
+  return result.sort((a,b) => a - b);
+}
+
 async function getIds(words) {
-  const prefixData = {};
-  const tokenGroups = [];
+  const unionSets = [];
   for (const word of words) {
+    let unionSet;
+    if (inputUnionMap.has(word)) {
+      unionSet = inputUnionMap.get(word);
+      console.log(inputUnionMap);
+    } else {
       const ilist = [];
       for await (const [key, value] of db.iterator({ gte: `token:${word}`, lt: `token:${word}~` })) {
-        const keystr = key.slice(6);
-        logger.log(keystr);
-        ilist.push(keystr);
-        prefixData[keystr] = new Uint32Array(value);
+        ilist.push(value.slice(6));
       }
-      tokenGroups.push(ilist);
+      unionSet = getUnion(ilist);
+      inputUnionMap.set(word, unionSet);
+    }
+    unionSets.push(unionSet);
   }
-  logger.log(JSON.stringify(prefixData));
-  logger.log(JSON.stringify(tokenGroups));
-  const sugIds = getSuggestionIDs(prefixData, tokenGroups);
-  logger.log(sugIds);
-  logger.log('-----------------------------------------------------------')
-  return sugIds;
+  return intersectionOfUnions(unionSets);
 }
 
 
