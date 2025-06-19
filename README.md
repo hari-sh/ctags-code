@@ -90,6 +90,7 @@ As you type, a **Quick Pick** dropdown will show matching symbols from the `tags
 - `tagsdb` is implemented using **LevelDB**, a fast key-value store.
 - Keys are tag names; values contain file paths and symbol location info.
 - Lookup is optimized for incremental filtering and fast results.
+- Tag search suggestion is optimized based on token match pattern search.
 
 ## Contributing
 

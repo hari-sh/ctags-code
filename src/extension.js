@@ -3,10 +3,13 @@ const path = require('path');
 const fs = require('fs');
 const {jumputil, getTag, storeTagsToDB} = require('./tagutils');
 const {initDB, closeDB, assignIdsToVariables, searchQuery, resetSearchMap} = require('./dbutils');
+const logger = require('./logger');
+const debug = require('./debug');
 
 async function parseAndStoreTags() {
     await storeTagsToDB(path.join(vscode.workspace.rootPath, 'tags'));
     await assignIdsToVariables();
+    // await debug.printdb();
     vscode.window.showInformationMessage('Tags are parsed');
 }
 
@@ -52,6 +55,7 @@ async function jump2tag(context) {
 
 module.exports = {
   activate(context) {
+    logger.initLogger();
     initDB();
     context.subscriptions.push(vscode.commands.registerCommand('extension.storeTags', parseAndStoreTags));
     context.subscriptions.push(vscode.commands.registerCommand('extension.searchTags', handleSearchTagsCommand));
@@ -59,5 +63,6 @@ module.exports = {
   },
   deactivate() {
     closeDB();
+    logger.disposeLogger();
   }
 };
